@@ -1,0 +1,26 @@
+<?php
+
+/**
+ * OR hook_mail_alter()
+ */
+function alter_contact_email_mail_alter(&$message) {
+  if ($message['id'] == 'contact_user_mail') {
+    $sender = $message['params']['sender'];
+    $language = \Drupal::languageManager()->getLanguage($message['langcode']);
+    $variables = [
+      '@sender-name' => $sender->getDisplayName(),
+    ];
+    if ($sender->isAuthenticated()) {
+      $variables['@sender-url'] = $sender->toUrl('canonical', [
+        'absolute' => TRUE,
+        'language' => $language,
+      ])->toString();
+    }
+    else {
+      $variables['@sender-url'] = $sender->getEmail();
+    }
+    $options = ['langcode' => $language->getId()];
+    $message['body'][1] = t("@sender-name (@sender-url) has sent you a message via your contact form on the @site-name website. You can respond to them by clicking on the link above and using the Contact tab or you can use their email address that is listed on their profile page. DO NOT respond to this email as it will not be sent to them.", $variables, $options);
+    unset($message['body'][2]); // Remove the third line.
+  }
+}
